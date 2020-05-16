@@ -78,9 +78,16 @@ class FiducialsNode {
 
     ros::ServiceServer service_enable_detections;
 
+    int x_coord;
+    int y_coord;
+    int width; 
+    int height;
+    
     // if set, we publish the images that contain fiducials
     bool publish_images;
     bool enable_detections;
+
+
 
     double fiducial_len;
 
@@ -337,7 +344,11 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr & msg) {
 
     try {
         cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-
+        Rect Rec(x_coord, y_coord, width, height);
+        //TODO: convert this values (x, y, width, height) to rosparams
+        rectangle(cv_ptr->image, Rec, Scalar(255), 1, 8, 0);
+        //Mat Roi = cv_ptr->image(Rec);
+        cv_ptr->image = cv_ptr->image(Rec);
         vector <int>  ids;
         vector <vector <Point2f> > corners, rejected;
         vector <Vec3d>  rvecs, tvecs;
@@ -593,7 +604,10 @@ FiducialsNode::FiducialsNode() : nh(), pnh("~"), it(nh)
 
     callbackType = boost::bind(&FiducialsNode::configCallback, this, _1, _2);
     configServer.setCallback(callbackType);
-
+    pnh.param<int>("x", x_coord, 100);
+    pnh.param<int>("y", y_coord, 300);
+    pnh.param<int>("width", width, 1000);
+    pnh.param<int>("height", height, 300);
     pnh.param<double>("adaptiveThreshConstant", detectorParams->adaptiveThreshConstant, 7);
     pnh.param<int>("adaptiveThreshWinSizeMax", detectorParams->adaptiveThreshWinSizeMax, 53); /* defailt 23 */
     pnh.param<int>("adaptiveThreshWinSizeMin", detectorParams->adaptiveThreshWinSizeMin, 3);
